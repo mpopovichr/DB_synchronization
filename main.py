@@ -33,7 +33,7 @@ for dbName in f:
     for frame in frame_list:
         avg_elong = data[data.frame==frame]['elong_xx'].mean()
         time = time_data.frame[frame]
-    df = pd.DataFrame([[]])
+    df = pd.DataFrame([[ ]])
 
 
 ##SMOOTHING ELONG
