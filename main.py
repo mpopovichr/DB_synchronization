@@ -8,6 +8,8 @@ import pandas.io.sql as psql
 import pandas.io.parsers as pp
 import os
 
+import scipy.interpolate as itp
+
 class Movie():
     def __init__(self, name):
         self.name = name
@@ -63,10 +65,36 @@ for x in movies.keys():
     if x[:2] == 'MT':
         MT_movies.append(x)
 
-# for m in [movies[x] for x in WT_simple_movies]:
-# for m in [movies[x] for x in cold_movies]:
+m = movies[WT_movies[1]]
+x = np.array(m.data['time'])
+y = np.array(m.data['elong_xx'])
+x_old = x
+y_old = y
+mf = itp.interp1d(x,y)
+x_new = np.arange(x.min(), x.max(), (x.max()-x.min())/200.)
+y_new = mf(x_new)
 plt.figure()
-for m in [movies[x] for x in WT_movies]:
+plt.plot(x,y,'-', x_old, y_old)
+plt.show()
+
+## REMOVING OUTLIERS
+
+elon_deriv = (y[1:]-y[:-1])/(x[1:]-x[:-1])
+elon_deriv_mean = elon_deriv.mean()
+elon_deriv_stddev = elon_deriv.std()
+
+t=0
+while t < len(x)-1:
+    if ((y[t+1]-y[t])/(x[t+1]-x[t]) > elon_deriv_mean + elon_deriv_stddev) or ((y[t+1]-y[t])/(x[t+1]-x[t]) < elon_deriv_mean - elon_deriv_stddev):
+        x = np.delete(x,t+1)
+        y = np.delete(y,t+1)
+        print 'DELETING FRAME: ', t
+    else:
+        t += 1
+
+
+plt.figure()
+for m in [movies[x] for x in hot_movies]:
     plt.plot(m.data['shifted_time'], m.data['elong_xx'], label =m.name)
 plt.legend(loc = 4)
 plt.show()
@@ -83,8 +111,6 @@ for m in movies.values():
     max_elong = m.data['elong_xx'][max_frame]
     m.data['shifted_time'] = m.data['time'] - max_t
     m.data['shifted_elong_xx'] = m.data['elong_xx'] - max_elong
-
-
 
 
 plt.figure()
