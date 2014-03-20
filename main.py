@@ -9,6 +9,8 @@ import pandas.io.parsers as pp
 import os
 
 import scipy.interpolate as itp
+from scipy import signal
+from scipy import fftpack
 
 class Movie():
     def __init__(self, name):
@@ -65,33 +67,97 @@ for x in movies.keys():
     if x[:2] == 'MT':
         MT_movies.append(x)
 
-m = movies[WT_movies[1]]
-x = np.array(m.data['time'])
-y = np.array(m.data['elong_xx'])
-x_old = x
-y_old = y
-mf = itp.interp1d(x,y)
-x_new = np.arange(x.min(), x.max(), (x.max()-x.min())/200.)
-y_new = mf(x_new)
-plt.figure()
-plt.plot(x,y,'-', x_old, y_old)
-plt.show()
 
 ## REMOVING OUTLIERS
 
-elon_deriv = (y[1:]-y[:-1])/(x[1:]-x[:-1])
-elon_deriv_mean = elon_deriv.mean()
-elon_deriv_stddev = elon_deriv.std()
+for m in movies.values():
+    x = np.array(m.data['time'])
+    y = np.array(m.data['elong_xx'])
+    x_old = x
+    y_old = y
+    elon_deriv = (y[1:]-y[:-1])/(x[1:]-x[:-1])
+    t=20
+    while t < len(x)-30:
+        local_elon_deriv_mean = elon_deriv[t-30:t+30].mean()
+        local_elon_deriv_stddev = elon_deriv[t-30:t+30].std()
+        if ((y[t+1]-y[t])/(x[t+1]-x[t]) > local_elon_deriv_mean + local_elon_deriv_stddev) or ((y[t+1]-y[t])/(x[t+1]-x[t]) < local_elon_deriv_mean - local_elon_deriv_stddev):
+            x = np.delete(x,t+1)
+            y = np.delete(y,t+1)
+            print 'DELETING FRAME: ', t
+        else:
+            t += 1
+    m.itp_elon = itp.interp1d(x,y)
 
-t=0
-while t < len(x)-1:
-    if ((y[t+1]-y[t])/(x[t+1]-x[t]) > elon_deriv_mean + elon_deriv_stddev) or ((y[t+1]-y[t])/(x[t+1]-x[t]) < elon_deriv_mean - elon_deriv_stddev):
-        x = np.delete(x,t+1)
-        y = np.delete(y,t+1)
-        print 'DELETING FRAME: ', t
-    else:
-        t += 1
+plt.figure()
+for m in [movies[x] for x in WT_movies]:
+    x = np.arange(0,m.data['time'].max(), 1000)
+    y = m.itp_elon(x)
+    plt.plot(x,y, label = m.name)
+plt.legend(loc = 'best')
+plt.show()
 
+##ALIGNING MAXIMA
+for m in movies.values():
+    max_loc = np.argmax(m.data['elong_xx'])
+    m.data['shifted_time_align_max'] = m.data['time'] - m.data['time'][max_loc]
+MT_movies
+WT_cold_movies = ['WT_25deg_111103.sqlite', 'WT_25deg_120531.sqlite', 'WT_25deg_111102.sqlite']
+WT_hot_movies = ['WT_25-30deg_130926.sqlite', 'WT_25-30deg_130921.sqlite']
+MT_hot_movies = ['MTcdc2_25-30deg_130917.sqlite', 'MTcdc2_25-30deg_130919.sqlite', 'MTcdc2_25-30deg_130916.sqlite']
+MT_cold_movies =['MTcdc2_25deg_130905.sqlite']
+
+plt.figure()
+for m in [movies[x] for x in WT_cold_movies]:
+    x = m.data['shifted_time_align_max']
+    y = m.data['elong_xx']-m.data['elong_xx'].max()
+    plt.plot(x,y, label = m.name, c='red')
+for m in [movies[x] for x in MT_hot_movies]:
+    x = m.data['shifted_time_align_max']*1.22
+    y = m.data['elong_xx']-m.data['elong_xx'].max()
+    plt.plot(x,y, label = m.name, c='blue')
+for m in [movies[x] for x in WT_hot_movies]:
+    x = m.data['shifted_time_align_max']
+    y = m.data['elong_xx']-m.data['elong_xx'].max()
+    plt.plot(x,y, label = m.name, c='green')
+for m in [movies[x] for x in MT_cold_movies]:
+    x = m.data['shifted_time_align_max']*0.85
+    y = m.data['elong_xx']-m.data['elong_xx'].max()
+    plt.plot(x,y, label = m.name, c='black')
+plt.legend(loc = 'best')
+plt.show()
+
+master = movies['WT_25deg_111102.sqlite']
+slave = movies['WT_25deg_111103.sqlite']
+
+x_max = np.min([master.data['time'].max(), slave.data['time'].max()])
+x_range = np.arange(0, x_max, 100)
+y_master = master.itp_elon(x_range)
+y_slave = slave.itp_elon(x_range)
+
+test1 = np.ones(10)
+test2 = np.ones(10)
+norm = np.arange(len(test1))+1
+norm =np.append(norm, np.arange(len(test1)-1,0,-1))
+signal.correlate(test1, test2)/norm
+
+norm = np.arange(len(y_master))+1
+norm =np.append(norm, np.arange(len(y_master)-1,0,-1))
+shft = (np.argmax(signal.correlate(y_master, y_slave)/norm)-len(y_slave))*100
+
+x_corr = np.arange(-150, 150, 1)
+y_corr_master = (y_master- y_master.mean())/y_master.std()
+y_corr_slave = (y_slave- y_slave.mean())/y_slave.std()
+len(signal.correlate(y_master, y_slave))
+len(np.arange(-len(y_master), len(y_master)-1,1))
+plt.figure()
+plt.plot(np.arange(-len(y_master), len(y_master)-1,1), signal.correlate(y_master, y_slave)/norm)
+plt.legend(loc= 'best')
+plt.show()
+
+plt.figure()
+plt.plot(x_range, y_master, x_range , y_slave)
+plt.legend(loc = 'best')
+plt.show()
 
 plt.figure()
 for m in [movies[x] for x in hot_movies]:
@@ -117,3 +183,44 @@ plt.figure()
 for dbName in WT_movies:
     plt.plot([movies[dbName].time[x] for x in movies[dbName].frames], [movies[dbName].elong_xx[x] for x in movies[dbName].frames])
 plt.show()
+
+
+import numpy as np
+
+import rpy2.robjects.numpy2ri
+from rpy2 import robjects
+rpy2.robjects.numpy2ri.activate()
+from rpy2.robjects.packages import importr
+
+# Set up our R namespaces
+R = rpy2.robjects.r
+
+DTW = importr('dtw')
+
+x_max = np.min([master.data['time'].max(), slave.data['time'].max()])
+x_range = np.arange(0, x_max, 100)
+y_master = master.itp_elon(x_range)
+y_slave = slave.itp_elon(x_range)
+y_master_cs = y_master.cumsum()
+y_slave_cs = y_slave.cumsum()
+y_master_deriv =(y_master[1:]-y_master[:-1])/100.
+y_slave_deriv =(y_slave[1:]-y_slave[:-1])/100.
+
+
+# Calculate the alignment vector and corresponding distance
+for delta in np.linspace(0., 0.04, 20):
+    alignment = R.dtw(y_slave+delta, y_master, keep=True)
+    dist = alignment.rx('distance')[0][0]
+    print(delta, dist)
+
+idx1 = np.array(alignment.rx('index1')[0])
+idx2 = np.array(alignment.rx('index2')[0])
+x_master_plot = [x_range[x-1] for x in idx1]
+x_slave_plot = [x_range[x-1] for x in idx2]
+
+
+plt.figure()
+plt.plot(x_range, y_master)
+plt.plot(x_range, y_slave+0.0126)
+plt.show()
+
