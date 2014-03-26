@@ -101,29 +101,77 @@ for m in movies.values():
     max_loc = np.argmax(m.data['elong_xx'])
     m.data['shifted_time_align_max'] = m.data['time'] - m.data['time'][max_loc]
 MT_movies
+HT_movies[2]
 WT_cold_movies = ['WT_25deg_111103.sqlite', 'WT_25deg_120531.sqlite', 'WT_25deg_111102.sqlite']
 WT_hot_movies = ['WT_25-30deg_130926.sqlite', 'WT_25-30deg_130921.sqlite']
 MT_hot_movies = ['MTcdc2_25-30deg_130917.sqlite', 'MTcdc2_25-30deg_130919.sqlite', 'MTcdc2_25-30deg_130916.sqlite']
 MT_cold_movies =['MTcdc2_25deg_130905.sqlite']
 
 plt.figure()
-for m in [movies[x] for x in WT_cold_movies]:
-    x = m.data['shifted_time_align_max']
-    y = m.data['elong_xx']-m.data['elong_xx'].max()
-    plt.plot(x,y, label = m.name, c='red')
-for m in [movies[x] for x in MT_hot_movies]:
-    x = m.data['shifted_time_align_max']*1.22
-    y = m.data['elong_xx']-m.data['elong_xx'].max()
-    plt.plot(x,y, label = m.name, c='blue')
-for m in [movies[x] for x in WT_hot_movies]:
-    x = m.data['shifted_time_align_max']
-    y = m.data['elong_xx']-m.data['elong_xx'].max()
-    plt.plot(x,y, label = m.name, c='green')
-for m in [movies[x] for x in MT_cold_movies]:
-    x = m.data['shifted_time_align_max']*0.85
-    y = m.data['elong_xx']-m.data['elong_xx'].max()
-    plt.plot(x,y, label = m.name, c='black')
+# for m in [movies[x] for x in WT_cold_movies]:
+#     x = m.data['shifted_time_align_max']/3600.
+#     y = m.data['elong_xx']#-m.data['elong_xx'].max()
+#     plt.plot(x,y, label = 'old definition')
+m = movies[WT_cold_movies[2]]
+x = m.data['time']/3600.
+y = m.data['elong_xx']#-m.data['elong_xx'].max()
+plt.plot(x,y, label = 'old definition')
+plt.plot(e_time, e_elon, label = 'triangles')
+plt.legend()
+plt.show()
+# for m in [movies[x] for x in MT_hot_movies]:
+#     x = m.data['shifted_time_align_max']/3600.
+#     y = m.data['elong_xx']#-m.data['elong_xx'].max()
+#     plt.plot(x,y, label = m.name)
+# for m in [movies[x] for x in WT_hot_movies]:
+#     x = m.data['shifted_time_align_max']/3600.
+#     y = m.data['elong_xx']#-m.data['elong_xx'].max()
+#     plt.plot(x,y, label = m.name)
+# m = movies[WT_hot_movies[1]]
+# x = m.data['shifted_time_align_max']*1.1
+# y = m.data['elong_xx']-m.data['elong_xx'].max()
+# plt.plot(x,y, label = m.name, c='red')
+# m = movies[WT_hot_movies[1]]
+# x = m.data['shifted_time_align_max']
+# y = m.data['elong_xx']-m.data['elong_xx'].max()
+# plt.plot(x,y, label = m.name, c='red')
+# m = movies[HT_movies[0]]
+# x = m.data['shifted_time_align_max']
+p# y = m.data['elong_xx']-m.data['elong_xx'].max()
+# plt.plot(x,y, label = m.name, c='green')
+# m = movies[HT_movies[2]]
+# x = m.data['shifted_time_align_max']
+# y = m.data['elong_xx']-m.data['elong_xx'].max()
+# plt.plot(x,y, label = m.name, c='green')
+# plt.plot(x,y, label = m.name, c='green')
+# for m in [movies[x] for x in MT_cold_movies]:
+#     x = m.data['shifted_time_align_max']#*0.85
+#     y = m.data['elong_xx']-m.data['elong_xx'].max()
+#     plt.plot(x,y, label = m.name, c='green')
 plt.legend(loc = 'best')
+plt.xlabel('time[h]')
+plt.ylabel('Q_1')
+plt.savefig('figures/MT_hot_absolute.png')
+plt.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.integrate as it
+
+## READING EXPERIMENTAL DATA
+e_time, e_shear, e_elon = [], [], []
+inp = open('/home/mpopovic/Documents/Work/Projects/drosophila_wing_analysis/111102/blade+hinge/triangleState.dat', 'r')
+inp.readline()
+for line in inp.readlines():
+    dat = line.rstrip().split()
+    e_time.append(float(dat[0]))
+    e_elon.append(float(dat[3]))
+inp.close()
+e_time = [x-16.0 for x in e_time]
+max_index = np.argmax(e_elon)
+e_time = np.array(e_time) - e_time[0]
+plt.figure()
+plt.plot(e_time, e_elon)
 plt.show()
 
 master = movies['WT_25deg_111102.sqlite']
