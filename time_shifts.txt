@@ -1,0 +1,16 @@
+movie_name,shift[s]
+HTcdc2_25-30deg_130927.sqlite,12309
+WT_severedHB-25deg_130107.sqlite,18987
+120531_Debug_Tissue_Sample.sqlite,24402
+MTcdc2_25deg_130905.sqlite,21094
+WT_25deg_120531.sqlite,20830
+MTcdc2_25-30deg_130917.sqlite,19611
+WT_25-30deg_130926.sqlite,24706
+HTcdc2_25-30deg_130925.sqlite,22438
+MTcdc2_25-30deg_130919.sqlite,15890
+WT_25-30deg_130921.sqlite,17587
+WT_25deg_111102.sqlite,24079
+HTcdc2_25-30deg_130924.sqlite,16009
+WT_distLinkCut-25deg_131226.sqlite,563
+MTcdc2_25-30deg_130916.sqlite,17183
+WT_25deg_111103.sqlite,19957

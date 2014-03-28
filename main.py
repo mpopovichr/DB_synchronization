@@ -99,7 +99,9 @@ plt.show()
 ##ALIGNING MAXIMA
 for m in movies.values():
     max_loc = np.argmax(m.data['elong_xx'])
+    m.shift = m.data['time'][max_loc]-m.data['time'][0]
     m.data['shifted_time_align_max'] = m.data['time'] - m.data['time'][max_loc]
+
 MT_movies
 HT_movies[2]
 WT_cold_movies = ['WT_25deg_111103.sqlite', 'WT_25deg_120531.sqlite', 'WT_25deg_111102.sqlite']
@@ -110,48 +112,40 @@ MT_cold_movies =['MTcdc2_25deg_130905.sqlite']
 plt.figure()
 # for m in [movies[x] for x in WT_cold_movies]:
 #     x = m.data['shifted_time_align_max']/3600.
-#     y = m.data['elong_xx']#-m.data['elong_xx'].max()
-#     plt.plot(x,y, label = 'old definition')
-m = movies[WT_cold_movies[2]]
-x = m.data['time']/3600.
-y = m.data['elong_xx']#-m.data['elong_xx'].max()
-plt.plot(x,y, label = 'old definition')
-plt.plot(e_time, e_elon, label = 'triangles')
-plt.legend()
-plt.show()
+#     y = m.data['elong_xx']/m.data['elong_xx'].max()
+#     plt.plot(x,y, label = m.name, c='blue')
+for m in [movies[x] for x in WT_hot_movies]:
+    x = m.data['shifted_time_align_max']/3600.
+    y = m.data['elong_xx']/m.data['elong_xx'].max()
+    plt.plot(x,y, label = m.name, c = 'blue')
 # for m in [movies[x] for x in MT_hot_movies]:
 #     x = m.data['shifted_time_align_max']/3600.
-#     y = m.data['elong_xx']#-m.data['elong_xx'].max()
-#     plt.plot(x,y, label = m.name)
-# for m in [movies[x] for x in WT_hot_movies]:
-#     x = m.data['shifted_time_align_max']/3600.
-#     y = m.data['elong_xx']#-m.data['elong_xx'].max()
-#     plt.plot(x,y, label = m.name)
+#     y = m.data['elong_xx']/m.data['elong_xx'].max()
+#     plt.plot(x,y, label = m.name, c='blue')
+for m in [movies[x] for x in HT_movies]:
+    x = m.data['shifted_time_align_max']/3600.
+    y = m.data['elong_xx']/m.data['elong_xx'].max()
+    plt.plot(x,y, label = m.name, c='red')
 # m = movies[WT_hot_movies[1]]
-# x = m.data['shifted_time_align_max']*1.1
-# y = m.data['elong_xx']-m.data['elong_xx'].max()
-# plt.plot(x,y, label = m.name, c='red')
-# m = movies[WT_hot_movies[1]]
-# x = m.data['shifted_time_align_max']
-# y = m.data['elong_xx']-m.data['elong_xx'].max()
+# x = m.data['shifted_time_align_max']/3600.
+# y = m.data['elong_xx']/m.data['elong_xx'].max()
 # plt.plot(x,y, label = m.name, c='red')
 # m = movies[HT_movies[0]]
-# x = m.data['shifted_time_align_max']
-p# y = m.data['elong_xx']-m.data['elong_xx'].max()
+# x = m.data['shifted_time_align_max']/3600.
+# y = m.data['elong_xx']/m.data['elong_xx'].max()
 # plt.plot(x,y, label = m.name, c='green')
 # m = movies[HT_movies[2]]
-# x = m.data['shifted_time_align_max']
-# y = m.data['elong_xx']-m.data['elong_xx'].max()
-# plt.plot(x,y, label = m.name, c='green')
+# x = m.data['shifted_time_align_max']/3600.
+# y = m.data['elong_xx']/m.data['elong_xx'].max()
 # plt.plot(x,y, label = m.name, c='green')
 # for m in [movies[x] for x in MT_cold_movies]:
-#     x = m.data['shifted_time_align_max']#*0.85
-#     y = m.data['elong_xx']-m.data['elong_xx'].max()
+#     x = m.data['shifted_time_align_max']/3600.#*0.85
+#     y = m.data['elong_xx']/m.data['elong_xx'].max()
 #     plt.plot(x,y, label = m.name, c='green')
 plt.legend(loc = 'best')
 plt.xlabel('time[h]')
 plt.ylabel('Q_1')
-plt.savefig('figures/MT_hot_absolute.png')
+plt.savefig('figures/WTHT_hot.png')
 plt.show()
 
 import numpy as np
@@ -253,22 +247,3 @@ y_master_cs = y_master.cumsum()
 y_slave_cs = y_slave.cumsum()
 y_master_deriv =(y_master[1:]-y_master[:-1])/100.
 y_slave_deriv =(y_slave[1:]-y_slave[:-1])/100.
-
-
-# Calculate the alignment vector and corresponding distance
-for delta in np.linspace(0., 0.04, 20):
-    alignment = R.dtw(y_slave+delta, y_master, keep=True)
-    dist = alignment.rx('distance')[0][0]
-    print(delta, dist)
-
-idx1 = np.array(alignment.rx('index1')[0])
-idx2 = np.array(alignment.rx('index2')[0])
-x_master_plot = [x_range[x-1] for x in idx1]
-x_slave_plot = [x_range[x-1] for x in idx2]
-
-
-plt.figure()
-plt.plot(x_range, y_master)
-plt.plot(x_range, y_slave+0.0126)
-plt.show()
-
